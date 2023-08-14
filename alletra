@@ -1,3 +1,5 @@
+sudo -i
+
 pip install python-3parclient
 
 vim /etc/cinder/cinder.conf
