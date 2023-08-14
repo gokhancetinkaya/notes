@@ -24,6 +24,7 @@ san_ip = 10.10.10.60
 san_login = 3paradm
 san_password = 3pardata
 volume_driver = cinder.volume.drivers.hpe.hpe_3par_fc.HPE3PARFCDriver
+volume_backend_name = alletra-9000
 
 systemctl restart cinder-mysql-router.service
 systemctl restart cinder-scheduler.service
