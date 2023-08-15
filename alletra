@@ -11,20 +11,22 @@ san_ip = 10.10.10.40
 san_login = admin
 san_password = adminadmin
 use_multipath_for_image_xfer = True
+san_thin_provision = True
 volume_driver = cinder.volume.drivers.hpe.nimble.NimbleFCDriver
 volume_backend_name = alletra-6000
-san_thin_provision = True
 
 [alletra-9000]
+san_ip = 10.10.10.60
+san_login = 3paradm
+san_password = 3pardata
+use_multipath_for_image_xfer = True
+volume_driver = cinder.volume.drivers.hpe.hpe_3par_fc.HPE3PARFCDriver
+san_thin_provision = True
+volume_backend_name = alletra-9000
 hpe3par_api_url = https://alletra-9060.epl1.net/api/v1
 hpe3par_username = 3paradm
 hpe3par_password = 3pardata
 hpe3par_cpg = SSD_r6
-san_ip = 10.10.10.60
-san_login = 3paradm
-san_password = 3pardata
-volume_driver = cinder.volume.drivers.hpe.hpe_3par_fc.HPE3PARFCDriver
-volume_backend_name = alletra-9000
 
 systemctl restart cinder-mysql-router.service
 systemctl restart cinder-scheduler.service
