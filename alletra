@@ -35,4 +35,4 @@ systemctl restart cinder-volume.service
 openstack volume type create alletra-6000
 openstack volume type set --property volume_backend_name=alletra-6000 alletra-6000
 
-openstack volume create --type alletra-6000 --image cirros --size 10 alletra-6000-v1
+openstack volume create --type alletra-6000 --image cirros --size 11 alletra-6000-v1
