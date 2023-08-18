@@ -55,7 +55,7 @@ openstack router add subnet provider-router int_subnet
 echo "Creating image..."
 
 #create image
-openstack image create --public --container-format bare --disk-format qcow2 --file ~/ob96-demos/openstack/cloud-images/cirros-0.6.1-x86_64-disk.raw cirros
+openstack image create --public --container-format bare --disk-format raw --file ~/ob96-demos/openstack/cloud-images/cirros-0.6.1-x86_64-disk.raw cirros
 
 #create flavor
 openstack flavor create --ram 512 --disk 5 --ephemeral 10 m1.teeny
