@@ -72,7 +72,7 @@ applications:
     expose: true
     num_units: 1
     to:
-    - lxd:0
+    - lxd:1
     bindings:
       ? ''
       : oam
