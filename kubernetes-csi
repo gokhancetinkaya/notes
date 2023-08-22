@@ -3,7 +3,7 @@
 helm repo add hpe https://hpe-storage.github.io/co-deployments/
 helm repo update
 kubectl create ns vendor
-helm install -n vendor csi vendor/hpe-csi-driver
+helm install -n vendor csi hpe/hpe-csi-driver
 kubectl get csidrivers
 kubectl get csinodes
 
