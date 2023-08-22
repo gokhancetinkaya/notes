@@ -2,8 +2,8 @@
 
 helm repo add hpe https://hpe-storage.github.io/co-deployments/
 helm repo update
-kubectl create ns hpe
-helm install -n hpe csi hpe/hpe-csi-driver
+kubectl create ns vendor
+helm install -n vendor csi vendor/hpe-csi-driver
 kubectl get csidrivers
 kubectl get csinodes
 
@@ -12,7 +12,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: csi
-  namespace: hpe
+  namespace: vendor
 stringData:
   serviceName: nimble-csp-svc
   servicePort: "8080"
