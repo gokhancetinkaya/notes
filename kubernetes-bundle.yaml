@@ -4,6 +4,15 @@ series: jammy
 source: https://github.com/charmed-kubernetes/bundle
 website: https://ubuntu.com/kubernetes/charmed-k8s
 name: charmed-kubernetes
+
+machines:
+  '0':
+    constraints: tags=kubernetes-1
+  '1':
+    constraints: tags=kubernetes-2
+  '2':
+    constraints: tags=kubernetes-3
+
 applications:
   calico:
     annotations:
