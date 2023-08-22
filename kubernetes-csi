@@ -63,7 +63,7 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi
+      storage: 10Gi
 
 kubectl apply -f my-pvc.yaml
 kubectl get pvc
@@ -78,7 +78,8 @@ mysqlRootPassword: admin
 persistence:
     existingClaim: my-pvc
 
-helm install mysql -f mysql.yaml stable/mysql
+-delete: helm install mysql -f mysql.yaml stable/mysql
+helm install mysql -f mysql.yaml oci://registry-1.docker.io/bitnamicharts/mysql
 kubectl rollout status deploy/mysql
 
 kubectl exec -it deploy/mysql -- bash
@@ -106,7 +107,7 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 2Gi
+      storage: 20Gi
 
 kubectl apply -f my-pvc-expand.yaml
 watch kubectl get -f my-pvc.yaml
@@ -203,7 +204,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 8Gi
+      storage: 10Gi
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -218,7 +219,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 8Gi
+      storage: 10Gi
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -233,7 +234,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 8Gi
+      storage: 10Gi
 
 kubectl create -f my-pvcs-from-snapshots.yaml
 
@@ -263,7 +264,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 8Gi
+      storage: 10Gi
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -277,7 +278,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 8Gi
+      storage: 10Gi
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -291,7 +292,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 8Gi
+      storage: 10Gi
 
 kubectl create -f my-pvcs-from-pvcs.yaml
 
@@ -326,7 +327,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 8Gi
+      storage: 10Gi
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -341,7 +342,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 8Gi
+      storage: 10Gi
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -356,7 +357,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 8Gi
+      storage: 10Gi
 
 helm uninstall my-redis
 
@@ -387,7 +388,7 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 2Ti
+      storage: 10Gi
   volumeMode: Block
 
 kubectl create -f my-block-pvc.yaml
@@ -495,7 +496,7 @@ spec:
         csi.storage.k8s.io/ephemeral: "true"
         inline-volume-secret-name: csi
         inline-volume-secret-namespace: vendor
-        size: 64Gi
+        size: 10Gi
 
 kubectl create -f my-inline.yaml
 kubectl get -f my-inline.yaml -w
@@ -539,7 +540,7 @@ spec:
           accessModes: [ "ReadWriteOnce" ]
           resources:
             requests:
-              storage: 64Gi
+              storage: 10Gi
 
 kubectl create -f my-ephemeral.yaml
 kubectl get -f my-ephemeral.yaml -w
