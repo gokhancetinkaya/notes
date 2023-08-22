@@ -560,3 +560,24 @@ cat /usr/share/nginx/html/index.html
 exit
 
 kubectl get pvc -l app=myfrontend
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+spec:
+  volumes:
+    - name: nginx-storage
+      persistentVolumeClaim:
+        claimName: my-pvc
+  containers:
+    - name: nginx-container
+      image: nginx
+      ports:
+        - containerPort: 80
+          name: "http-server"
+      volumeMounts:
+        - mountPath: "/usr/share/nginx/html"
+          name: nginx-storage
