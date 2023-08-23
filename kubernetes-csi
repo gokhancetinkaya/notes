@@ -70,6 +70,7 @@ helm install -n vendor csi hpe/hpe-csi-driver
 kubectl get csidrivers
 kubectl get csinodes
 
+Alletra 6000
 vim secret.yaml
 
 
@@ -85,11 +86,28 @@ stringData:
   username: admin
   password: adminadmin
 
+Alletra 9000
+vim secret.yaml
+
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: csi
+  namespace: vendor
+stringData:
+  serviceName: primera3par-csp-svc
+  servicePort: "8080"
+  backend: 10.10.10.60
+  username: 3paradm
+  password: 3pardata
 
 kubectl create -f secret.yaml
 kubectl get secret -n vendor
 
 Create StorageClass
+
+Alletra 6000
 vim my-storageclass.yaml
 
 
@@ -117,6 +135,34 @@ reclaimPolicy: Delete
 allowVolumeExpansion: true
 volumeBindingMode: Immediate
 
+Alletra 9000
+vim my-storageclass.yaml
+
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: my-storageclass
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: csi.hpe.com
+parameters:
+  csi.storage.k8s.io/fstype: xfs
+  csi.storage.k8s.io/controller-expand-secret-name: csi
+  csi.storage.k8s.io/controller-expand-secret-namespace: vendor
+  csi.storage.k8s.io/controller-publish-secret-name: csi
+  csi.storage.k8s.io/controller-publish-secret-namespace: vendor
+  csi.storage.k8s.io/node-publish-secret-name: csi
+  csi.storage.k8s.io/node-publish-secret-namespace: vendor
+  csi.storage.k8s.io/node-stage-secret-name: csi
+  csi.storage.k8s.io/node-stage-secret-namespace: vendor
+  csi.storage.k8s.io/provisioner-secret-name: csi
+  csi.storage.k8s.io/provisioner-secret-namespace: vendor
+  accessProtocol: fc
+  cpg: SSD_r6
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+volumeBindingMode: Immediate
 
 kubectl create -f my-storageclass.yaml
 kubectl get sc
@@ -168,6 +214,7 @@ spec:
 kubectl create -f nginx.yaml
 kubectl get pods -w
 kubectl exec -it nginx -- bash
+df -h
 echo “test” > /usr/share/nginx/html/index.html
 exit
 
@@ -187,8 +234,8 @@ spec:
       storage: 20Gi
 
 
-kubectl create -f my-pvc-expand.yaml
-watch kubectl get -f my-pvc-expand.yaml
+kubectl apply -f my-pvc-expand.yaml
+kubectl get -f my-pvc-expand.yaml -w
 
 
 kubectl exec -it nginx -- bash
@@ -276,10 +323,11 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
+      storage: 20Gi
 
 
 kubectl create -f my-pvc-from-pvc.yaml
+kubectl get -f my-pvc-from-pvc.yaml
 
 Create a raw block device
 vim my-block-pvc.yaml
@@ -324,11 +372,11 @@ spec:
         devicePath: /dev/xvda
 
 
-kubectl create -f nginx-block.yaml
+kubectl create -f nginx2.yaml
 kubectl get pods -w
 
 Using ephemeral inline volumes
-vim my-inline.yaml
+vim my-ephemeral.yaml
 
 
 apiVersion: v1
@@ -353,10 +401,10 @@ spec:
         size: 10Gi
 
 
-kubectl create -f my-inline.yaml
+kubectl create -f my-ephemeral.yaml
 
 Using generic ephemeral volumes
-vim my-ephemeral.yaml
+vim my-ephemeral2.yaml
 
 
 apiVersion: v1
@@ -384,54 +432,4 @@ spec:
               storage: 10Gi
 
 
-kubectl create -f my-ephemeral.yaml
-
-Deploy Rook
-kubectl create ns rook-ceph
-helm repo add rook-release https://charts.rook.io/release
-helm repo update
-helm install --namespace rook-ceph rook-ceph rook-release/rook-ceph
-kubectl get pods -n rook-ceph -w
-
-
-vim ceph-cluster.yaml
-
-
-apiVersion: ceph.rook.io/v1
-kind: CephCluster
-metadata:
-  name: rook-ceph
-  namespace: rook-ceph
-spec:
-  cephVersion:
-    image: ceph/ceph:v15.2.4
-  dataDirHostPath: /var/lib/rook
-  mon:
-    count: 3
-    volumeClaimTemplate:
-      spec:
-        resources:
-          requests:
-            storage: 10Gi
-  storage:
-   storageClassDeviceSets:
-    - name: set1
-      count: 3
-      portable: false
-      tuneDeviceClass: false
-      encrypted: false
-      volumeClaimTemplates:
-      - metadata:
-          name: data
-        spec:
-          resources:
-            requests:
-              storage: 10Gi
-          volumeMode: Block
-          accessModes:
-            - ReadWriteOnce
-
-
-kubectl create -f ceph-cluster.yaml
-kubectl get pods -n rook-ceph -w
-kubectl get pvc -n rook-ceph -o wide
+kubectl create -f my-ephemeral2.yaml
