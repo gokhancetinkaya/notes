@@ -3,7 +3,12 @@
 helm repo add hpe https://hpe-storage.github.io/co-deployments/
 helm repo update
 kubectl create ns vendor
+
+For MicroK8s:
+helm install -n vendor csi hpe/hpe-csi-driver --set kubeletRootDir=/var/snap/microk8s/common/var/lib/kubelet
+
 helm install -n vendor csi hpe/hpe-csi-driver
+
 kubectl get csidrivers
 kubectl get csinodes
 
