@@ -46,6 +46,7 @@ parameters:
   csi.storage.k8s.io/node-stage-secret-namespace: vendor
   csi.storage.k8s.io/provisioner-secret-name: csi
   csi.storage.k8s.io/provisioner-secret-namespace: vendor
+  accessProtocol: fc
 reclaimPolicy: Delete
 allowVolumeExpansion: true
 volumeBindingMode: Immediate
