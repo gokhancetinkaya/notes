@@ -1,19 +1,22 @@
-# Install CSI driver
-
+Install CSI driver
 helm repo add hpe https://hpe-storage.github.io/co-deployments/
 helm repo update
 kubectl create ns vendor
 
+
 For MicroK8s:
 helm install -n vendor csi hpe/hpe-csi-driver --set kubeletRootDir=/var/snap/microk8s/common/var/lib/kubelet
 
+
 ?? Charmed Kubernetes:
 helm install -n vendor csi hpe/hpe-csi-driver
+
 
 kubectl get csidrivers
 kubectl get csinodes
 
 vim secret.yaml
+
 
 apiVersion: v1
 kind: Secret
@@ -27,13 +30,12 @@ stringData:
   username: admin
   password: adminadmin
 
+
 kubectl create -f secret.yaml
 
--
-
-# Create a StorageClass and PVC
-
+Create a StorageClass and PVC
 vim my-storageclass.yaml
+
 
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -59,10 +61,12 @@ reclaimPolicy: Delete
 allowVolumeExpansion: true
 volumeBindingMode: Immediate
 
+
 kubectl apply -f my-storageclass.yaml
 kubectl get sc
 
 vim my-pvc.yaml
+
 
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -75,15 +79,14 @@ spec:
     requests:
       storage: 10Gi
 
+
 kubectl apply -f my-pvc.yaml
 kubectl get pvc
 kubectl get pv
 
--
-
-# Attach a workload
-
+Attach a workload
 vim nginx.yaml
+
 
 apiVersion: v1
 kind: Pod
@@ -107,15 +110,12 @@ spec:
 
 kubectl apply -f nginx.yaml
 kubectl exec -it nginx -- bash
-df -h
 echo “test” > /usr/share/nginx/html/index.html
 exit
 
--
-
-# Expand volume
-
+Expand volume
 vim my-pvc-expand.yaml
+
 
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -128,41 +128,25 @@ spec:
     requests:
       storage: 20Gi
 
+
 kubectl apply -f my-pvc-expand.yaml
 watch kubectl get -f my-pvc.yaml
+
 
 kubectl exec -it nginx -- bash
 df -h
 cat /usr/share/nginx/html/index.html
 exit
 
--
-
-# Deploy an application using a StatefulSet
-
-vim redis.yaml
-usePassword: false
-
-helm install my-redis -f redis.yaml bitnami/redis
-
-watch kubectl get sts,pod,pvc -l release=my-redis
-
-kubectl exec -it sts/my-redis-master -- redis-cli
-set test/status ok
-get test/status
-bgsave
-
--
-
-# Deploy CSI snapshotter, create a VolumeSnapshotClass and VolumeSnapshots
-
+Deploy CSI snapshotter, create a VolumeSnapshotClass and a VolumeSnapshot
 git clone https://github.com/kubernetes-csi/external-snapshotter
-
 kubectl create -f external-snapshotter/client/config/crd
 kubectl create -f external-snapshotter/deploy/kubernetes/snapshot-controller
 
 vim my-volumesnapshotclass.yaml
-apiVersion: snapshot.storage.k8s.io/v1beta1
+
+
+apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshotClass
 metadata:
   name: my-volumesnapshotclass
@@ -174,81 +158,35 @@ parameters:
   csi.storage.k8s.io/snapshotter-secret-name: csi
   csi.storage.k8s.io/snapshotter-secret-namespace: vendor
 
+
 kubectl create -f my-volumesnapshotclass.yaml
 
-vim my-volumesnapshots.yaml
-apiVersion: snapshot.storage.k8s.io/v1beta1
+vim my-volumesnapshot.yaml
+
+
+apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshot
 metadata:
-  name: my-server-snapshot-0
+  name: my-snapshot
 spec:
   source:
-    persistentVolumeClaimName: redis-data-my-redis-master-0
----
-apiVersion: snapshot.storage.k8s.io/v1beta1
-kind: VolumeSnapshot
-metadata:
-  name: my-replica-snapshot-0
-spec:
-  source:
-    persistentVolumeClaimName: redis-data-my-redis-slave-0
----
-apiVersion: snapshot.storage.k8s.io/v1beta1
-kind: VolumeSnapshot
-metadata:
-  name: my-replica-snapshot-1
-spec:
-  source:
-    persistentVolumeClaimName: redis-data-my-redis-slave-1
+    persistentVolumeClaimName: my-pvc
 
-kubectl create -f my-volumesnapshots.yaml
 
-kubectl get -f my-volumesnapshots.yaml
+kubectl create -f my-volumesnapshot.yaml
+kubectl get -f my-volumesnapshot.yaml
 
--
+Create a new PVC from a VolumeSnapshot
+vim my-pvc-from-snapshot.yaml
 
-# Create a new PVC from a VolumeSnapshot and attach an application
 
-kubectl get -f my-volumesnapshots.yaml
-
-vim my-pvcs-from-snapshots.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: redis-data-my-new-redis-master-0
+  name: my-pvc-from-snapshot
 spec:
   dataSource:
-    name: my-server-snapshot-0
-    kind: VolumeSnapshot
-    apiGroup: snapshot.storage.k8s.io
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: redis-data-my-new-redis-slave-0
-spec:
-  dataSource:
-    name: my-replica-snapshot-0
-    kind: VolumeSnapshot
-    apiGroup: snapshot.storage.k8s.io
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: redis-data-my-new-redis-slave-1
-spec:
-  dataSource:
-    name: my-replica-snapshot-1
+    name: my-snapshot
     kind: VolumeSnapshot
     apiGroup: snapshot.storage.k8s.io
   accessModes:
@@ -257,57 +195,21 @@ spec:
     requests:
       storage: 10Gi
 
-kubectl create -f my-pvcs-from-snapshots.yaml
 
-kubectl get -f my-pvcs-from-snapshots.yaml
+kubectl create -f my-pvc-from-snapshot.yaml
+kubectl get -f my-pvc-from-snapshot.yaml
 
-helm install my-new-redis -f redis.yaml bitnami/redis
+Create a new PVC from an existing PVC
+vim my-pvc-from-pvc.yaml
 
-watch kubectl get sts,pods -l release=my-new-redis
 
-kubectl exec -it sts/my-new-redis-master -- redis-cli
-get test/status
-
--
-
-# Create a new PVC from an existing PVC and attach an application
-
-vim my-pvcs-from-pvcs.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: redis-data-my-clone-redis-master-0
+  name: my-pvc-from-pvc
 spec:
   dataSource:
-    name: redis-data-my-redis-master-0
-    kind: PersistentVolumeClaim
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: redis-data-my-clone-redis-slave-0
-spec:
-  dataSource:
-    name: redis-data-my-redis-slave-0
-    kind: PersistentVolumeClaim
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: redis-data-my-clone-redis-slave-1
-spec:
-  dataSource:
-    name: redis-data-my-redis-slave-1
+    name: my-pvc
     kind: PersistentVolumeClaim
   accessModes:
     - ReadWriteOnce
@@ -315,90 +217,10 @@ spec:
     requests:
       storage: 10Gi
 
-kubectl create -f my-pvcs-from-pvcs.yaml
 
-helm install my-clone-redis -f redis.yaml bitnami/redis
+kubectl create -f my-pvc-from-pvc.yaml
 
-watch kubectl get sts,pods -l release=my-clone-redis
-
-kubectl exec -it sts/my-clone-redis-master -- redis-cli
-get test/status
-
-kubectl get volumesnapshots,volumesnapshotcontents -o name
-
--
-
-# Restore an application from a VolumeSnapshot
-
-kubectl exec -it sts/my-redis-master -- redis-cli
-del test/status
-get test/status
-
-vim my-pvcs.yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: redis-data-my-redis-master-0
-spec:
-  dataSource:
-    name: my-server-snapshot-0
-    kind: VolumeSnapshot
-    apiGroup: snapshot.storage.k8s.io
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: redis-data-my-redis-slave-0
-spec:
-  dataSource:
-    name: my-replica-snapshot-0
-    kind: VolumeSnapshot
-    apiGroup: snapshot.storage.k8s.io
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: redis-data-my-redis-slave-1
-spec:
-  dataSource:
-    name: my-replica-snapshot-1
-    kind: VolumeSnapshot
-    apiGroup: snapshot.storage.k8s.io
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
-
-helm uninstall my-redis
-
-kubectl delete pvc -l release=my-redis
-
-kubectl create -f my-pvcs.yaml
-
-kubectl get -f my-pvcs.yaml
-
-helm install -f redis.yaml my-redis bitnami/redis
-
-watch kubectl get sts,pods -l release=my-redis
-
-kubectl exec -it sts/my-clone-redis-master -- redis-cli
-get test/status
-
--
-
-# Create a raw block device and attach a workload
-
+Create a raw block device and attach a workload
 vim my-block-pvc.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -412,31 +234,39 @@ spec:
       storage: 10Gi
   volumeMode: Block
 
+
 kubectl create -f my-block-pvc.yaml
 
-vim ioping.yaml
+vim nginx-block.yaml
+
+
 apiVersion: v1
 kind: Pod
 metadata:
-  name: ioping
+  name: nginx
 spec:
-  containers:
-  - name: ioping
-    image: datamattsson/ioping:edge
-    args: [ "/dev/xvda" ]
-    volumeDevices:
-    - name: volume
-      devicePath: /dev/xvda
   volumes:
-  - name: volume
-    persistentVolumeClaim:
-      claimName: my-block-pvc
+    - name: nginx-storage
+      persistentVolumeClaim:
+        claimName: my-block-pvc
+  containers:
+    - name: nginx-container
+      image: nginx
+      ports:
+        - containerPort: 80
+          name: "http-server"
+      volumeDevices:
+      - name: volume
+        devicePath: /dev/xvda
 
-kubectl create -f ioping.yaml
 
-kubectl get pod/ioping.yaml -w
+kubectl create -f nginx-block.yaml
+kubectl get pod/nginx-block.yaml -w
+kubectl logs -f pods/nginx-block
 
-kubectl logs -f pods/ioping
+
+
+
 
 -
 
