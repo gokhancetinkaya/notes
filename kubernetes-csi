@@ -7,12 +7,14 @@ kubectl create ns vendor
 For MicroK8s:
 helm install -n vendor csi hpe/hpe-csi-driver --set kubeletRootDir=/var/snap/microk8s/common/var/lib/kubelet
 
+?? Charmed Kubernetes:
 helm install -n vendor csi hpe/hpe-csi-driver
 
 kubectl get csidrivers
 kubectl get csinodes
 
 vim secret.yaml
+
 apiVersion: v1
 kind: Secret
 metadata:
@@ -32,6 +34,7 @@ kubectl create -f secret.yaml
 # Create a StorageClass and PVC
 
 vim my-storageclass.yaml
+
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -60,6 +63,7 @@ kubectl apply -f my-storageclass.yaml
 kubectl get sc
 
 vim my-pvc.yaml
+
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -79,24 +83,32 @@ kubectl get pv
 
 # Attach a workload
 
-vim mysql.yaml
-mysqlRootPassword: admin
-persistence:
-    existingClaim: my-pvc
+vim nginx.yaml
 
--delete: helm install mysql -f mysql.yaml stable/mysql
-helm install mysql -f mysql.yaml oci://registry-1.docker.io/bitnamicharts/mysql
-kubectl rollout status deploy/mysql
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+spec:
+  volumes:
+    - name: nginx-storage
+      persistentVolumeClaim:
+        claimName: my-pvc
+  containers:
+    - name: nginx-container
+      image: nginx
+      ports:
+        - containerPort: 80
+          name: "http-server"
+      volumeMounts:
+        - mountPath: "/usr/share/nginx/html"
+          name: nginx-storage
 
-kubectl exec -it deploy/mysql -- bash
-mount |grep mysql
-df -h /var/lib/mysql
 
-mysql -p
-create database test;
-exit
-
-ls /var/lib/mysql/test
+kubectl apply -f nginx.yaml
+kubectl exec -it nginx -- bash
+df -h
+echo “test” > /usr/share/nginx/html/index.html
 exit
 
 -
@@ -104,6 +116,7 @@ exit
 # Expand volume
 
 vim my-pvc-expand.yaml
+
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -115,11 +128,13 @@ spec:
     requests:
       storage: 20Gi
 
-kubectl apply -f my-pvc-expand.yaml
+kubectl apply -f my-pvc-expand.yaml -n vendor
 watch kubectl get -f my-pvc.yaml
 
-kubectl exec -it deploy/mysql -- bash
-df -h /var/lib/mysql
+kubectl exec -it nginx -- bash
+df -h
+cat /usr/share/nginx/html/index.html
+exit
 
 -
 
