@@ -1,3 +1,58 @@
+OS download link: https://releases.ubuntu.com/22.04.2/ubuntu-22.04.2-live-server-amd64.iso
+
+Update system
+sudo apt update && sudo apt upgrade -y
+
+Install LXD
+sudo snap refresh snapd
+sudo snap install lxd --channel latest/stable
+sudo lxd init
+
+Install MAAS
+sudo snap install maas --channel=3.3/stable
+sudo snap install maas-test-db
+sudo maas init region+rack --database-uri maas-test-db:/// --maas-url http://10.10.20.201:5240/MAAS
+sudo maas createadmin --username admin --password admin --email admin@localhost
+ssh-keygen
+sudo maas apikey --username admin > ~/admin-api-key
+
+Enable DHCP on 192.168.1.0/24 network
+
+Configure MAAS as LXD host
+
+Enable routing for LXD VMs through MAAS
+sudo vim /etc/sysctl.conf
+net.ipv4.ip_forward=1
+sudo iptables -t nat -A POSTROUTING -o eno5np0 -j MASQUERADE
+sudo apt install iptables-persistent
+sudo iptables-save > /etc/iptables/rules.v4
+
+Create Juju VM
+
+Install Juju
+sudo snap install juju --channel=2.9/stable --classic
+juju add-cloud
+Select cloud type: maas
+Enter a name for your maas cloud: maas-cloud
+Enter the API endpoint url: http://10.10.20.201:5240/MAAS
+
+
+juju add-credential maas-cloud
+Enter credential name: maas-cloud-creds
+Enter maas-oauth: <maas admin api key>
+juju bootstrap maas-cloud --constraints tags=juju
+
+Install Kubernetes
+juju add-model -c maas-cloud-default kubernetes
+juju switch maas-cloud-default:kubernetes
+juju download charmed-kubernetes --channel latest/stable
+unzip charmed-kubernetes.bundle -d kubernetes
+rm charmed-kubernetes.bundle
+cd kubernetes
+
+Deploy bundle
+juju deploy ./bundle.yaml
+
 Install CSI driver
 helm repo add hpe https://hpe-storage.github.io/co-deployments/
 helm repo update
@@ -32,8 +87,9 @@ stringData:
 
 
 kubectl create -f secret.yaml
+kubectl get secret -n vendor
 
-Create a StorageClass and PVC
+Create StorageClass
 vim my-storageclass.yaml
 
 
@@ -62,9 +118,10 @@ allowVolumeExpansion: true
 volumeBindingMode: Immediate
 
 
-kubectl apply -f my-storageclass.yaml
+kubectl create -f my-storageclass.yaml
 kubectl get sc
 
+Create PVC
 vim my-pvc.yaml
 
 
@@ -80,7 +137,7 @@ spec:
       storage: 10Gi
 
 
-kubectl apply -f my-pvc.yaml
+kubectl create -f my-pvc.yaml
 kubectl get pvc
 kubectl get pv
 
@@ -108,7 +165,8 @@ spec:
           name: nginx-storage
 
 
-kubectl apply -f nginx.yaml
+kubectl create -f nginx.yaml
+kubectl get pods -w
 kubectl exec -it nginx -- bash
 echo “test” > /usr/share/nginx/html/index.html
 exit
@@ -129,8 +187,8 @@ spec:
       storage: 20Gi
 
 
-kubectl apply -f my-pvc-expand.yaml
-watch kubectl get -f my-pvc.yaml
+kubectl create -f my-pvc-expand.yaml
+watch kubectl get -f my-pvc-expand.yaml
 
 
 kubectl exec -it nginx -- bash
@@ -138,11 +196,12 @@ df -h
 cat /usr/share/nginx/html/index.html
 exit
 
-Deploy CSI snapshotter, create a VolumeSnapshotClass and a VolumeSnapshot
+Deploy CSI snapshotter
 git clone https://github.com/kubernetes-csi/external-snapshotter
 kubectl create -f external-snapshotter/client/config/crd
 kubectl create -f external-snapshotter/deploy/kubernetes/snapshot-controller
 
+Create VolumeSnapshotClass
 vim my-volumesnapshotclass.yaml
 
 
@@ -160,14 +219,16 @@ parameters:
 
 
 kubectl create -f my-volumesnapshotclass.yaml
+kubectl get -f my-volumesnapshotclass.yaml
 
+Create VolumeSnapshot
 vim my-volumesnapshot.yaml
 
 
 apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshot
 metadata:
-  name: my-snapshot
+  name: my-volumesnapshot
 spec:
   source:
     persistentVolumeClaimName: my-pvc
@@ -176,7 +237,7 @@ spec:
 kubectl create -f my-volumesnapshot.yaml
 kubectl get -f my-volumesnapshot.yaml
 
-Create a new PVC from a VolumeSnapshot
+Create a new PVC from the VolumeSnapshot
 vim my-pvc-from-snapshot.yaml
 
 
@@ -186,14 +247,14 @@ metadata:
   name: my-pvc-from-snapshot
 spec:
   dataSource:
-    name: my-snapshot
+    name: my-volumesnapshot
     kind: VolumeSnapshot
     apiGroup: snapshot.storage.k8s.io
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
+      storage: 20Gi
 
 
 kubectl create -f my-pvc-from-snapshot.yaml
@@ -220,8 +281,10 @@ spec:
 
 kubectl create -f my-pvc-from-pvc.yaml
 
-Create a raw block device and attach a workload
+Create a raw block device
 vim my-block-pvc.yaml
+
+
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -237,13 +300,14 @@ spec:
 
 kubectl create -f my-block-pvc.yaml
 
-vim nginx-block.yaml
+Attach a workload to the raw block device
+vim nginx2.yaml
 
 
 apiVersion: v1
 kind: Pod
 metadata:
-  name: nginx
+  name: nginx2
 spec:
   volumes:
     - name: nginx-storage
@@ -256,33 +320,83 @@ spec:
         - containerPort: 80
           name: "http-server"
       volumeDevices:
-      - name: volume
+      - name: nginx-storage
         devicePath: /dev/xvda
 
 
 kubectl create -f nginx-block.yaml
-kubectl get pod/nginx-block.yaml -w
-kubectl logs -f pods/nginx-block
+kubectl get pods -w
+
+Using ephemeral inline volumes
+vim my-inline.yaml
 
 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  containers:
+    - name: myfrontend
+      image: nginx
+      volumeMounts:
+      - mountPath: "/usr/share/nginx/html"               
+        name: my-mount
+  volumes:
+  - name: my-mount
+    csi:
+      driver: csi.hpe.com
+      volumeAttributes:
+        csi.storage.k8s.io/ephemeral: "true"
+        inline-volume-secret-name: csi
+        inline-volume-secret-namespace: vendor
+        size: 10Gi
 
 
+kubectl create -f my-inline.yaml
 
--
+Using generic ephemeral volumes
+vim my-ephemeral.yaml
 
-# Deploy Rook
 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod2
+spec:
+  containers:
+    - name: myfrontend
+      image: nginx
+      volumeMounts:
+      - mountPath: "/usr/share/nginx/html"               
+        name: my-mount
+  volumes:
+  - name: my-mount
+    ephemeral:
+      volumeClaimTemplate:
+        metadata:
+          labels:
+            app: myfrontend
+        spec:
+          accessModes: [ "ReadWriteOnce" ]
+          resources:
+            requests:
+              storage: 10Gi
+
+
+kubectl create -f my-ephemeral.yaml
+
+Deploy Rook
 kubectl create ns rook-ceph
-
 helm repo add rook-release https://charts.rook.io/release
-
 helm repo update
-
 helm install --namespace rook-ceph rook-ceph rook-release/rook-ceph
-
 kubectl get pods -n rook-ceph -w
 
+
 vim ceph-cluster.yaml
+
+
 apiVersion: ceph.rook.io/v1
 kind: CephCluster
 metadata:
@@ -317,118 +431,7 @@ spec:
           accessModes:
             - ReadWriteOnce
 
+
 kubectl create -f ceph-cluster.yaml
-
 kubectl get pods -n rook-ceph -w
-
 kubectl get pvc -n rook-ceph -o wide
-
--
-
-# Using ephemeral local volumes
-
-vim my-inline.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-pod
-spec:
-  containers:
-    - name: myfrontend
-      image: nginx
-      volumeMounts:
-      - mountPath: "/usr/share/nginx/html"               
-        name: my-mount
-  volumes:
-  - name: my-mount
-    csi:
-      driver: csi.hpe.com
-      volumeAttributes:
-        csi.storage.k8s.io/ephemeral: "true"
-        inline-volume-secret-name: csi
-        inline-volume-secret-namespace: vendor
-        size: 10Gi
-
-kubectl create -f my-inline.yaml
-kubectl get -f my-inline.yaml -w
-
-kubectl exec -it pod/my-pod --bash
-cd /usr/share/nginx/html
-echo "test" > index.html
-exit
-
-kubectl replace --force -f my-inline.yaml
-kubectl get -f my-inline.yaml -w
-
-kubectl exec -it pod/my-pod -- bash
-cat /usr/share/nginx/html/index.html
-exit
-
--
-
-# Using generic ephemeral volumes
-
-vim my-ephemeral.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-pod
-spec:
-  containers:
-    - name: myfrontend
-      image: nginx
-      volumeMounts:
-      - mountPath: "/usr/share/nginx/html"               
-        name: my-mount
-  volumes:
-  - name: my-mount
-    ephemeral:
-      volumeClaimTemplate:
-        metadata:
-          labels:
-            app: myfrontend
-        spec:
-          accessModes: [ "ReadWriteOnce" ]
-          resources:
-            requests:
-              storage: 10Gi
-
-kubectl create -f my-ephemeral.yaml
-kubectl get -f my-ephemeral.yaml -w
-
-kubectl get pvc -l app=myfrontend
-
-kubectl exec -it pod/my-pod -- bash
-cd /usr/share/nginx/html
-echo "test" > index.html
-exit
-
-kubectl replace --force -f my-ephemeral.yaml
-kubectl get -f my-ephemeral.yaml -w
-
-kubectl exec -it pod/my-pod -- bash
-cat /usr/share/nginx/html/index.html
-exit
-
-kubectl get pvc -l app=myfrontend
-
----
-
-apiVersion: v1
-kind: Pod
-metadata:
-  name: nginx
-spec:
-  volumes:
-    - name: nginx-storage
-      persistentVolumeClaim:
-        claimName: my-pvc
-  containers:
-    - name: nginx-container
-      image: nginx
-      ports:
-        - containerPort: 80
-          name: "http-server"
-      volumeMounts:
-        - mountPath: "/usr/share/nginx/html"
-          name: nginx-storage
