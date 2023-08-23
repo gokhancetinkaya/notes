@@ -128,7 +128,7 @@ spec:
     requests:
       storage: 20Gi
 
-kubectl apply -f my-pvc-expand.yaml -n vendor
+kubectl apply -f my-pvc-expand.yaml
 watch kubectl get -f my-pvc.yaml
 
 kubectl exec -it nginx -- bash
