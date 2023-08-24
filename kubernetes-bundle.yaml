@@ -20,6 +20,7 @@ applications:
     charm: calico
     options:
       vxlan: Always
+      ignore-loose-rpf: True
     bindings:
       ? ''
       : oam
@@ -87,9 +88,9 @@ applications:
     options:
       channel: 1.28/stable
     to:
-    - '0'
-    - '1'
-    - '2'
+    - lxd:0
+    - lxd:1
+    - lxd:2
     bindings:
       ? ''
       : oam
