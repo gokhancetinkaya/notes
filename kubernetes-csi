@@ -1,3 +1,11 @@
+Storage appliances tested:
+HPE Alletra 6030 (Software version: 6.1.1.300-1028597-opt)
+HPE Alletra 9060 (Software version: 9.5.11)
+
+OS: Ubuntu Server 22.04.2
+Kubernetes version: 1.27.4
+hpe-csi-driver Helm chart version: 2.3.0
+
 OS download link: https://releases.ubuntu.com/22.04.2/ubuntu-22.04.2-live-server-amd64.iso
 
 Update system
@@ -54,6 +62,18 @@ Deploy bundle
 juju deploy ./bundle.yaml
 
 Install CSI driver
+Charmed Kubernetes, on all nodes:
+sudo iptables -F
+
+
+Charmed Kubernetes, on a node:
+sudo snap install helm --classic
+
+
+For MicroK8s:
+#helm is already installed
+
+
 helm repo add hpe https://hpe-storage.github.io/co-deployments/
 helm repo update
 kubectl create ns vendor
@@ -63,7 +83,7 @@ For MicroK8s:
 helm install -n vendor csi hpe/hpe-csi-driver --set kubeletRootDir=/var/snap/microk8s/common/var/lib/kubelet
 
 
-?? Charmed Kubernetes:
+Charmed Kubernetes, on a node:
 helm install -n vendor csi hpe/hpe-csi-driver
 
 
@@ -234,7 +254,7 @@ spec:
       storage: 20Gi
 
 
-kubectl apply -f my-pvc-expand.yaml
+kubectl create -f my-pvc-expand.yaml
 kubectl get -f my-pvc-expand.yaml -w
 
 
@@ -245,6 +265,12 @@ exit
 
 Deploy CSI snapshotter
 git clone https://github.com/kubernetes-csi/external-snapshotter
+
+
+rm external-snapshotter/client/config/crd/kustomization.yaml
+rm external-snapshotter/deploy/kubernetes/snapshot-controller/kustomization.yaml
+
+
 kubectl create -f external-snapshotter/client/config/crd
 kubectl create -f external-snapshotter/deploy/kubernetes/snapshot-controller
 
@@ -373,9 +399,8 @@ spec:
 
 
 kubectl create -f nginx2.yaml
-kubectl get pods -w
 
-Using ephemeral inline volumes
+Using inline ephemeral volumes
 vim my-ephemeral.yaml
 
 
