@@ -62,10 +62,6 @@ Deploy bundle
 juju deploy ./bundle.yaml
 
 Install CSI driver
-Charmed Kubernetes, on all nodes:
-sudo iptables -F
-
-
 Charmed Kubernetes, on a node:
 sudo snap install helm --classic
 
@@ -154,6 +150,10 @@ parameters:
 reclaimPolicy: Delete
 allowVolumeExpansion: true
 volumeBindingMode: Immediate
+
+Get CPG name from Alletra 9000 for the Cinder configuration below (hpe3par_cpg):
+ssh 3paradm@10.10.10.60
+showcpg
 
 Alletra 9000
 vim my-storageclass.yaml
