@@ -197,7 +197,7 @@ applications:
       gui-x: '1120'
       gui-y: '1400'
     charm: ch:cinder-ceph
-    channel: zed/stable
+    channel: 2023.2/stable
     num_units: 0
   glance-mysql-router:
     annotations:
