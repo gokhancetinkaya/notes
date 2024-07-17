@@ -18,3 +18,4 @@ vault token create -ttl=10m | tee secrets/vault-token.txt
 TOKEN=$(grep token secrets/vault-token.txt | awk {"print \$2"} | head -1)
 
 juju run vault/leader authorize-charm token=$TOKEN
+juju run vault/leader generate-root-ca |tee vault-ca-cert.out
