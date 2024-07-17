@@ -1,0 +1,20 @@
+export VAULT_ADDR="http://<vault/leader>:8200"
+vault operator init | tee secrets/vault.txt
+
+KEYS=$(grep "Unseal Key" secrets/vault.txt |awk {"print \$4"} |head -3)
+
+export VAULT_ADDR="http://<vault/0>:8200"
+for KEY in $KEYS; do vault operator unseal $KEY; done
+
+export VAULT_ADDR="http://<vault/1>:8200"
+for KEY in $KEYS; do vault operator unseal $KEY; done
+
+export VAULT_ADDR="http://<vault/2>:8200"
+for KEY in $KEYS; do vault operator unseal $KEY; done
+
+export VAULT_ADDR="http://<vault/leader>:8200"
+export VAULT_TOKEN=$(grep "Initial Root Token" secrets/vault.txt | awk {"print \$4"})
+vault token create -ttl=10m | tee secrets/vault-token.txt
+TOKEN=$(grep token secrets/vault-token.txt | awk {"print \$2"} | head -1)
+
+juju run-action --wait vault/leader authorize-charm token=$TOKEN
