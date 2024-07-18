@@ -1,3 +1,16 @@
+ACCESS DASHBOARD
+juju status --format=yaml openstack-dashboard | grep public-address | awk '{print $2}' | head -1
+
+Get password:
+juju exec --unit keystone/leader leader-get admin_passwd
+
+https://IP/horizon
+admin
+password
+admin_domain
+
+Download openrc
+
 SETUP NETWORK
 openstack network create --external --provider-network-type flat --provider-physical-network physnet1 ext_net
 
@@ -41,14 +54,3 @@ openstack server add floating ip cirros-1 $FLOATING_IP
 
 LOG INTO INSTANCE
 ssh -i ~/openstack/cloud-keys/id_mykey ubuntu@$FLOATING_IP
-
-ACCESS DASHBOARD
-juju status --format=yaml openstack-dashboard | grep public-address | awk '{print $2}' | head -1
-
-Get password:
-juju exec --unit keystone/leader leader-get admin_passwd
-
-https://IP/horizon
-admin
-password
-admin_domain
