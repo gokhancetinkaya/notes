@@ -13,6 +13,10 @@ Download openrc
 add:
 export OS_CACERT=~/openstack/vault-ca-cert.out
 
+sudo snap install openstackclients
+source openrc
+openstack service list
+
 SETUP NETWORK
 openstack network create --external --provider-network-type flat --provider-physical-network physnet1 ext_net
 
