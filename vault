@@ -11,4 +11,6 @@ echo $TOKEN > token.txt
 
 TOKEN=$(juju exec -u vault/leader 'cat token.txt')
 juju run vault/leader authorize-charm token=$TOKEN
+
+# edit vault-ca-cert.out
 juju run vault/leader generate-root-ca |tee vault-ca-cert.out
