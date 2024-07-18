@@ -11,7 +11,7 @@ admin_domain
 
 Download openrc
 add:
-export OS_CACERT=/openstack/vault-ca-cert.out
+export OS_CACERT=~/openstack/vault-ca-cert.out
 
 SETUP NETWORK
 openstack network create --external --provider-network-type flat --provider-physical-network physnet1 ext_net
