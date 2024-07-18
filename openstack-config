@@ -1,11 +1,11 @@
 SETUP NETWORK
 openstack network create --external --provider-network-type flat --provider-physical-network physnet1 ext_net
 
-openstack subnet create --network ext_net --no-dhcp --gateway 172.27.99.254 --subnet-range 172.27.98.0/23 --allocation-pool start=172.27.99.101,end=172.27.99.200 ext_subnet
+openstack subnet create --network ext_net --no-dhcp --gateway 10.10.0.254 --subnet-range 10.10.0.0/16 --allocation-pool start=10.10.123.101,end=10.10.123.199 ext_subnet
 
 openstack network create int_net
 
-openstack subnet create --network int_net --dns-nameserver 172.27.99.254 --gateway 192.168.123.1 --subnet-range 192.168.123.0/24 --allocation-pool start=192.168.123.2,end=192.168.123.254 int_subnet
+openstack subnet create --network int_net --dns-nameserver 10.10.20.201 --gateway 192.168.123.1 --subnet-range 192.168.123.0/24 --allocation-pool start=192.168.123.2,end=192.168.123.254 int_subnet
 
 openstack router create provider-router
 
@@ -14,17 +14,17 @@ openstack router set --external-gateway ext_net provider-router
 openstack router add subnet provider-router int_subnet
 
 IMPORT IMAGE
-mkdir -p ~/ob96-demos/openstack/cloud-images
-curl https://github.com/cirros-dev/cirros/releases/download/0.6.1/cirros-0.6.1-x86_64-disk.img --output ~/ob96-demos/openstack/cloud-images/cirros.img
-openstack image create --public --container-format bare --disk-format qcow2 --file ~/ob96-demos/openstack/cloud-images/cirros.img cirros
+mkdir -p ~/openstack/cloud-images
+curl https://download.cirros-cloud.net/0.6.2/cirros-0.6.2-x86_64-disk.img --output ~/openstack/cloud-images/cirros.img
+openstack image create --public --container-format bare --disk-format qcow2 --file ~/openstack/cloud-images/cirros.img cirros
 
 CREATE FLAVOR
 openstack flavor create --ram 512 --disk 5 --ephemeral 10 m1.teeny
 
 IMPORT SSH KEYPAIR
-mkdir -p ~/ob96-demos/openstack/cloud-keys
-ssh-keygen -q -N '' -f ~/ob96-demos/openstack/cloud-keys/id_mykey
-openstack keypair create --public-key ~/ob96-demos/openstack/cloud-keys/id_mykey.pub mykey
+mkdir -p ~/openstack/cloud-keys
+ssh-keygen -q -N '' -f ~/openstack/cloud-keys/id_mykey
+openstack keypair create --public-key ~/openstack/cloud-keys/id_mykey.pub mykey
 
 CONFIGURE SECURITY GROUPS
 for i in $(openstack security group list | awk '/default/{ print $2 }'); do
@@ -40,7 +40,7 @@ FLOATING_IP=$(openstack floating ip create -f value -c floating_ip_address ext_n
 openstack server add floating ip cirros-1 $FLOATING_IP
 
 LOG INTO INSTANCE
-ssh -i ~/ob96-demos/openstack/cloud-keys/id_mykey ubuntu@$FLOATING_IP
+ssh -i ~/openstack/cloud-keys/id_mykey ubuntu@$FLOATING_IP
 
 ACCESS DASHBOARD
 juju status --format=yaml openstack-dashboard | grep public-address | awk '{print $2}' | head -1
