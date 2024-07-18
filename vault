@@ -1,4 +1,4 @@
-juju run vault/leader '
+juju exec -u vault/leader '
 export VAULT_ADDR="http://127.0.0.1:8200"
 vault operator init | tee vault.txt
 KEYS=$(grep "Unseal Key" vault.txt |awk {"print \$4"} |head -3)
@@ -9,6 +9,6 @@ TOKEN=$(grep token vault-token.txt | awk {"print \$2"} | head -1)
 echo $TOKEN > token.txt
 ' | tee vault-unseal.out
 
-TOKEN=$(juju run -u vault/leader 'cat token.txt')
+TOKEN=$(juju exec -u vault/leader 'cat token.txt')
 juju run vault/leader authorize-charm token=$TOKEN
 juju run vault/leader generate-root-ca |tee vault-ca-cert.out
