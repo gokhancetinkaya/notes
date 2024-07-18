@@ -1,4 +1,4 @@
-juju run -u vault/leader '
+juju run vault/leader '
 export VAULT_ADDR="http://127.0.0.1:8200"
 vault operator init | tee vault.txt
 KEYS=$(grep "Unseal Key" vault.txt |awk {"print \$4"} |head -3)
