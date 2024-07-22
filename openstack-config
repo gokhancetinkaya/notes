@@ -35,12 +35,7 @@ openstack router add subnet provider-router int_subnet
 IMPORT IMAGE
 mkdir -p ~/openstack/cloud-images
 curl https://download.cirros-cloud.net/0.6.2/cirros-0.6.2-x86_64-disk.img --output ~/openstack/cloud-images/cirros.img
-
-openstack image create --public --container-format bare --disk-format qcow2 --file ~/openstack/cloud-images/cirros.img cirros
-
-?
 openstack image create --public --container-format bare --disk-format raw --file ~/openstack/cloud-images/cirros.img cirros
-
 
 CREATE FLAVOR
 openstack flavor create --ram 512 --disk 5 --ephemeral 10 m1.teeny
