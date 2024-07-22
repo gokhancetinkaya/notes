@@ -2,7 +2,7 @@ name: openstack-base
 series: jammy
 variables:
   openstack-origin: &openstack-origin distro
-  data-port: &data-port br-ex:ens1f0np0
+  data-port: &data-port br-ex:eno1
   osd-devices: &osd-devices /dev/sdb /dev/sdc
   expected-osd-count: &expected-osd-count 3
   expected-mon-count: &expected-mon-count 3
