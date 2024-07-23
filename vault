@@ -1,15 +1,15 @@
 juju exec -u vault/leader '
 export VAULT_ADDR="http://127.0.0.1:8200"
-vault operator init | tee vault.txt
-KEYS=$(grep "Unseal Key" vault.txt |awk {"print \$4"} |head -3)
+vault operator init | tee /home/ubuntu/vault.txt
+KEYS=$(grep "Unseal Key" /home/ubuntu/vault.txt |awk {"print \$4"} |head -3)
 for KEY in $KEYS; do vault operator unseal $KEY; done
-export VAULT_TOKEN=$(grep "Initial Root Token" vault.txt | awk {"print \$4"})
-vault token create -ttl=10m | tee vault-token.txt
-TOKEN=$(grep token vault-token.txt | awk {"print \$2"} | head -1)
-echo $TOKEN > token.txt
+export VAULT_TOKEN=$(grep "Initial Root Token" /home/ubuntu/vault.txt | awk {"print \$4"})
+vault token create -ttl=10m | tee /home/ubuntu/vault-token.txt
+TOKEN=$(grep token /home/ubuntu/vault-token.txt | awk {"print \$2"} | head -1)
+echo $TOKEN > /home/ubuntu/token.txt
 ' | tee vault-unseal.out
 
-TOKEN=$(juju exec -u vault/leader 'cat token.txt')
+TOKEN=$(juju exec -u vault/leader 'cat /home/ubuntu/token.txt')
 juju run vault/leader authorize-charm token=$TOKEN
 
 juju run vault/leader generate-root-ca |tee vault-ca-cert.out
