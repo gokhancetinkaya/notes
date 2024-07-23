@@ -3,7 +3,7 @@ enabled_backends = cinder-ceph, alletra-mp
 
 
 [alletra-mp]
-san_ip = 10.10.10.60
+san_ip = 10.10.10.70
 san_login = 3paradm
 san_password = 3pardata
 use_multipath_for_image_xfer = True
