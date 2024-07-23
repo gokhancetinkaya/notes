@@ -1,6 +1,19 @@
+Do the following on each KVM host.
+sudo apt install sysfsutils sg3-utils
+
+Add the following to /etc/nova/nova.conf
+volume_use_multipath = True
+
+sudo systemctl restart nova-compute
+
+-
+
+On the Cinder machine
+sudo -i
+pip install python-3parclient
+
 /etc/cinder/cinder.conf
 enabled_backends = cinder-ceph, alletra-mp
-
 
 [alletra-mp]
 san_ip = 10.10.10.70
