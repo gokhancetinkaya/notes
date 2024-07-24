@@ -132,6 +132,8 @@ relations:
   - ceph-radosgw:certificates
 - - vault:certificates
   - mysql-innodb-cluster:certificates
+- - cinder:storage-backend
+  - cinder-three-par:storage-backend
 applications:
   ceph-mon:
     annotations:
@@ -225,8 +227,6 @@ applications:
       san-login: 3paradm
       san-password: 3pardata
       use-multipath-for-image-xfer: True
-      volume-driver: cinder.volume.drivers.hpe.hpe_3par_fc.HPE3PARFCDriver
-      san-thin-provision: True
       volume-backend-name: alletra-mp
       hpe3par-api-url: https://alletra-mp.epl1.net/api/v1
       hpe3par-username: 3paradm
