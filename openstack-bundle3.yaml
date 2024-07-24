@@ -228,7 +228,7 @@ applications:
       volume_driver: cinder.volume.drivers.hpe.hpe_3par_fc.HPE3PARFCDriver
       san_thin_provision: True
       volume_backend_name: alletra-mp
-      hpe3par_api_url: https://alletra-mp.epl1.net/api/v1
+      hpe3par-api-url: https://alletra-mp.epl1.net/api/v1
       hpe3par_username: 3paradm
       hpe3par_password: 3pardata
       hpe3par_cpg: SSD_r6
