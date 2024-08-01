@@ -203,7 +203,7 @@ applications:
     options:
       block-device: None
       glance-api-version: 2
-      openstack-origin: *openstack-origin
+      openstack-origin: cloud:jammy-caracal
     to:
     - 0
     bindings:
