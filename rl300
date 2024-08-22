@@ -1,4 +1,82 @@
+Canonical stack:
+Ubuntu 24.04
+MicroK8s 1.30
+COS 1.0
+Kubeflow ?
+
+Additional components:
+AI optimized TensorFlow ?
+YOLOv8 demo stack
+
+Ampere ?
+
+Create custom image?
+
+Deployment:
+Install and update ubuntu
+Install microk8s
+Install Juju
+Install COS
+Deploy yolo
+
+-
+
+Deploy yolo
+
+yolov8-k8s-deployment-v1-4.yaml
+	
+kubectl apply -f yolov8-k8s-deployment-v1-4.yaml
+
+
+---
+
+Install and update Ubuntu 24.04
+
 # Download and install Ubuntu 24.04
 
 # Update system
 sudo apt update && sudo apt upgrade -y
+
+Install MicroK8s
+
+# Install MicroK8s package:
+sudo snap install microk8s --channel=1.31-strict/stable
+
+# Add your user to the `microk8s` group for unprivileged access:
+sudo adduser $USER snap_microk8s
+
+# Give your user permissions to read the ~/.kube directory:
+sudo chown -f -R $USER ~/.kube
+
+# Wait for MicroK8s to finish initialising:
+sudo microk8s status --wait-ready
+
+# Enable the 'storage' and 'dns' addons:
+# (required for the Juju controller)
+sudo microk8s enable hostpath-storage dns
+
+# Alias kubectl so it interacts with MicroK8s by default:
+sudo snap alias microk8s.kubectl kubectl
+
+# Ensure your new group membership is apparent in the current terminal:
+# (Not required once you have logged out and back in again)
+newgrp snap_microk8s
+
+Install and configure Juju
+# Install Juju:
+sudo snap install juju --channel=3.5/stable
+
+# Since the juju package is strictly confined, you also need to manually create a path:
+mkdir -p ~/.local/share
+
+# Configure MicroK8s to work properly with Juju (Share the MicroK8s config with Juju)
+#Note: Command “microk8s config” retrieves the client’s Kubernetes config which is then registered to Juju Kubernetes endpoints.
+microk8s config | juju add-k8s microk8s --client
+OR
+microk8s config | juju add-k8s microk8s-1 --client
+
+# Deploy Juju controller to MicroK8s
+juju bootstrap microk8s
+OR
+juju bootstrap microk8s-1
+
