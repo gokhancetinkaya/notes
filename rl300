@@ -45,15 +45,18 @@ sudo snap install microk8s --channel=1.31-strict/stable
 # Add your user to the `microk8s` group for unprivileged access:
 sudo adduser $USER snap_microk8s
 
+## unnecessary, no kube directory
 # Give your user permissions to read the ~/.kube directory:
 sudo chown -f -R $USER ~/.kube
 
 # Wait for MicroK8s to finish initialising:
 sudo microk8s status --wait-ready
 
+## dns enabled by default
 # Enable the 'storage' and 'dns' addons:
 # (required for the Juju controller)
-sudo microk8s enable hostpath-storage dns
+#sudo microk8s enable hostpath-storage dns
+sudo microk8s enable hostpath-storage
 
 # Alias kubectl so it interacts with MicroK8s by default:
 sudo snap alias microk8s.kubectl kubectl
@@ -71,12 +74,14 @@ mkdir -p ~/.local/share
 
 # Configure MicroK8s to work properly with Juju (Share the MicroK8s config with Juju)
 #Note: Command “microk8s config” retrieves the client’s Kubernetes config which is then registered to Juju Kubernetes endpoints.
-microk8s config | juju add-k8s microk8s --client
-OR
 microk8s config | juju add-k8s microk8s-1 --client
 
 # Deploy Juju controller to MicroK8s
 juju bootstrap microk8s
-OR
-juju bootstrap microk8s-1
 
+Install COS
+juju add-model cos
+juju deploy cos-lite --trust
+
+# Check juju status until all apps become active
+watch -c 'juju status --color | grep -E "blocked|error|maintenance|waiting|App|Unit"'
