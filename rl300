@@ -80,8 +80,27 @@ microk8s config | juju add-k8s microk8s-1 --client
 juju bootstrap microk8s
 
 Install COS
+
+For the COS Lite bundle deployment to go smoothly, make sure the following MicroK8s addons are enabled: dns, hostpath-storage and metallb.
+
+dns is enabled by default, and we have already enabled hostpath-storage for Juju.
+
+The bundle comes with Traefik to provide ingress, for which the metallb addon should be enabled:
+IP=$(hostname -I | awk '{print $1}')
+microk8s enable metallb:"$IP-$IP"
+
+
+
+
+
 juju add-model cos
+
 juju deploy cos-lite --trust
 
 # Check juju status until all apps become active
+# It can take more than 30 minutes
 watch -c 'juju status --color | grep -E "blocked|error|maintenance|waiting|App|Unit"'
+
+# You can also check the deployment of pods
+watch 'kubectl get all -n cos'
+
