@@ -1,0 +1,4 @@
+# Download and install Ubuntu 24.04
+
+# Update system
+sudo apt update && sudo apt upgrade -y
