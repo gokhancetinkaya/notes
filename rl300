@@ -3,7 +3,7 @@ add all output during installation
 test performance without observability, watching things cost resources
 
 -
-ssssssssaa
+
 Canonical stack:
 Ubuntu 24.04
 MicroK8s 1.30
@@ -239,6 +239,7 @@ spec:
   template:
     metadata:
       labels:
+        # Label is used as selector in the service.
         app: yolov8-app1
     spec:
       containers:
@@ -270,6 +271,8 @@ spec:
       - name: dev-video0
         hostPath:
           path: /dev/video0
+            #nodeSelector:
+            #accept-pod: yolov8-app
 ---
 kind: Ingress
 apiVersion: networking.k8s.io/v1
@@ -289,7 +292,7 @@ spec:
             name: yolov8-app1-svc
             port:
               number: 80
- EOF
+EOF
 
 kubectl apply -f yolov8-k8s-deployment-v1-4.yaml
 
@@ -372,4 +375,3 @@ watch -c juju status --color
 
 # You can also check the deployment of pods
 watch kubectl get all -n cos
-
