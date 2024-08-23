@@ -113,7 +113,9 @@ spec:
                   number: 443
 EOF
 
+kubectl apply -f dashboard-ingress.yaml
 
+kubectl -n kube-system get service/kubernetes-dashboard -o go-template={{.spec.clusterIP}}
 
 
 
