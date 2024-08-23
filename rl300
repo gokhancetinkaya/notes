@@ -1,5 +1,7 @@
 add all output during installation
 
+test performance without observability, watching things cost resources
+
 -
 
 Canonical stack:
@@ -75,6 +77,113 @@ kubectl patch ds kube-prom-stack-prometheus-node-exporter --type "json" -p '[{"o
 # Enable ingress addon
 sudo microk8s enable ingress
 
+
+cat << EOF > obs-ingress.yaml
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: grafana-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    kubernetes.io/ingress.class: "public"
+    nginx.ingress.kubernetes.io/rewrite-target: / #new
+spec:
+  rules:
+  - host: "grafana.microk8s.hhii.hpe"
+    http:
+      paths:
+      - backend:
+          service:
+            name: kube-prom-stack-grafana
+            port:
+              number: 3000
+        path: /
+        pathType: Prefix
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: prometheus-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    kubernetes.io/ingress.class: "public"
+    nginx.ingress.kubernetes.io/rewrite-target: / #new
+spec:
+  rules:
+  - host: "prometheus.microk8s.hhii.hpe"
+    http:
+      paths:
+      - backend:
+          service:
+            name: kube-prom-stack-kube-prome-prometheus
+            port:
+              number: 9090
+        path: /
+        pathType: Prefix
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: alertmanager-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    kubernetes.io/ingress.class: "public"
+    nginx.ingress.kubernetes.io/rewrite-target: / #new
+spec:
+  rules:
+  - host: "alertmanager.microk8s.hhii.hpe"
+    http:
+      paths:
+      - backend:
+          service:
+            name: kube-prom-stack-kube-prome-alertmanager
+            port:
+              number: 9093
+        path: /
+        pathType: Prefix
+EOF
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DASHBOARD
+
 # Enable dashboard addon
 sudo microk8s enable dashboard
 
@@ -116,11 +225,6 @@ EOF
 kubectl apply -f dashboard-ingress.yaml
 
 kubectl -n kube-system get service/kubernetes-dashboard -o go-template={{.spec.clusterIP}}
-
-
-
-
-
 
 Install and configure Juju
 # Install Juju:
