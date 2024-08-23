@@ -239,7 +239,6 @@ spec:
   template:
     metadata:
       labels:
-        # Label is used as selector in the service.
         app: yolov8-app1
     spec:
       containers:
@@ -271,8 +270,6 @@ spec:
       - name: dev-video0
         hostPath:
           path: /dev/video0
-            #nodeSelector:
-            #accept-pod: yolov8-app
 ---
 kind: Ingress
 apiVersion: networking.k8s.io/v1
