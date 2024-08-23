@@ -104,3 +104,4 @@ watch -c 'juju status --color | grep -E "blocked|error|maintenance|waiting|App|U
 # You can also check the deployment of pods
 watch 'kubectl get all -n cos'
 
+kubectl patch ds monitoring-prometheus-node-exporter --type "json" -p '[{"op": "remove", "path" : "/spec/template/spec/containers/0/volumeMounts/2/mountPropagation"}]'
