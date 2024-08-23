@@ -81,6 +81,40 @@ sudo microk8s enable dashboard
 # Retrieve token to access the Kubernetes dashboard
 microk8s kubectl describe secret -n kube-system microk8s-dashboard-token
 
+# Apply Ingress yaml file for Kubernetes dashboard
+cat << EOF > dashboard-ingress.yaml
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-kubernetes-dashboard
+  namespace: kube-system
+  generation: 1
+  annotations:
+    kubernetes.io/ingress.class: public
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+    nginx.ingress.kubernetes.io/configuration-snippet: | 
+      chunked_transfer_encoding off;
+    nginx.ingress.kubernetes.io/proxy-body-size: '0'
+    nginx.ingress.kubernetes.io/proxy-ssl-verify: 'off'
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/server-snippet: | 
+      client_max_body_size 0;
+spec:
+  rules:
+    - host: console.microk8s.hhii.hpe
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kubernetes-dashboard
+                port:
+                  number: 443
+EOF
+
+
+
 
 
 
