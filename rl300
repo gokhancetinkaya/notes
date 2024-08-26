@@ -375,3 +375,17 @@ watch -c juju status --color
 
 # You can also check the deployment of pods
 watch kubectl get all -n cos
+
+-
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
