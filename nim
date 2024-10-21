@@ -69,10 +69,7 @@ kubectl create secret docker-registry ngc-docker-secret \
 kubectl create secret generic ngc-nim-secret \
 --from-literal=NGC_CLI_API_KEY=$NGC_CLI_API_KEY
 # Install NVIDIA NGC CLI
-sudo apt install unzip
-wget --content-disposition
-https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/3.43.0/files/ngccli_li
-nux.zip -O ngccli_linux.zip && unzip ngccli_linux.zip
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/3.52.0/files/ngccli_linux.zip -O ngccli_linux.zip && sudo apt install unzip && unzip ngccli_linux.zip
 echo "export PATH=\"\$PATH:$(pwd)/ngc-cli\"" >> ~/.bash_profile && source ~/.bash_profile
 ngc config set
 # Download the model
