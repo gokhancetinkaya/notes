@@ -182,10 +182,10 @@ spec:
       protocol: TCP
     resources:
       limits:
-        cpu: "12"
+        cpu: "1"
         memory: 32Gi
       requests:
-        cpu: "12"
+        cpu: "1"
         memory: 32Gi
     volumeMounts:
     - mountPath: /dev/shm
@@ -236,22 +236,18 @@ kubectl create -f inference-service.yaml
 
 # Watch the status of the pod created until it becomes ready
 kubectl describe pod llama3-8b-instruct-1xgpu
-Note: It can take a while for the pod to become functional. The warning message "Readiness probe failed" can be ignored. Continue with the instructions below and start testing queries.
+
+Wait until llama3-8b-instruct-1xgpu-predictor-00001-deployment is ready. The warning message from the pod "Readiness probe failed" can be ignored.
+kubectl get deployment llama3-8b-instruct-1xgpu-predictor-00001-deployment
 
 # Get the IP address of the private predictor
 KSERVE=$(kubectl get svc |grep private |awk '{print $3}')
 
 # Validate that the NIM is running by posting a query against the KServe endpoint
 curl http://$KSERVE/v1/chat/completions    -H "Content-Type: application/json"   -d '{
-    "model": "meta-llama3-8b-instruct",
+    "model": "meta/llama3-8b-instruct",
     "messages": [{"role":"user","content":"What is KServe?"}]
     }'
-
-
-curl http://$KSERVE/v1/chat/completions -H "Content-Type: application/json" -d '{
-    "model": "llama3-8b-instruct",
-    "messages": [{"role":"user","content":"What is KServe?"}]
-}'
 
 # Cleanup
 sudo snap remove --purge juju
