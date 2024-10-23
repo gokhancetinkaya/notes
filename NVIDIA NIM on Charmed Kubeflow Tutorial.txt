@@ -40,6 +40,9 @@ newgrp microk8s
 IP=$(hostname -I | awk '{print $1}')
 microk8s enable dns hostpath-storage ingress metallb:"$IP-$IP"
 
+# Save kubeconfig
+microk8s config > ~/.kube/config
+
 # Install the NVIDIA GPU Operator
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh
 
@@ -60,9 +63,6 @@ helm install gpu-operator -n gpu-operator --create-namespace \
 
 # Check MicroK8s status until the output shows "microk8s is running" and the add-ons installed are listed under "enabled"
 microk8s status --wait-ready
-
-# Save kubeconfig
-microk8s config > ~/.kube/config
 
 # Add an alias for omitting microk8s when running kubectl commands
 alias kubectl='microk8s kubectl'
@@ -175,18 +175,18 @@ spec:
         secretKeyRef:
           name: ngc-nim-secret
           key: NGC_CLI_API_KEY
-    image: nvcr.io/nim/meta/llama3-8b-instruct:1.0.3
+    image: nvcr.io/nim/meta/llama-3.1-8b-instruct:1.2.2
     name: kserve-container
     ports:
     - containerPort: 8000
       protocol: TCP
     resources:
       limits:
-        cpu: "1"
-        memory: 16Gi
+        cpu: "12"
+        memory: 32Gi
       requests:
-        cpu: "1"
-        memory: 16Gi
+        cpu: "12"
+        memory: 32Gi
     volumeMounts:
     - mountPath: /dev/shm
       name: dshm
@@ -199,7 +199,7 @@ spec:
   - autoSelect: true
     name: nim-meta-llama3-8b-instruct
     priority: 1
-    version: "24.05"
+    version: "1.2.2"
   volumes:
   - emptyDir:
       medium: Memory
