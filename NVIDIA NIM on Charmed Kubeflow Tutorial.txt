@@ -214,6 +214,8 @@ cat > inference-service.yaml << EOL
 apiVersion: serving.kserve.io/v1beta1
 kind: InferenceService
 metadata:
+  annotations:
+    autoscaling.knative.dev/target: "10"
   name: nim-meta-llama3-8b-instruct-1xgpu
 spec:
   predictor:
