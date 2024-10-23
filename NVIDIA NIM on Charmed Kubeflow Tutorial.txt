@@ -267,3 +267,4 @@ www.linkedin.com/in/gcetinkaya
 References:
 https://github.com/NVIDIA/nim-deploy/tree/main/kserve
 
+https://docs.google.com/document/d/1O0xN0RQOBPnwXq0zf54gOGiTgSSoPzirHSE6zluhoo4/edit?usp=sharing
