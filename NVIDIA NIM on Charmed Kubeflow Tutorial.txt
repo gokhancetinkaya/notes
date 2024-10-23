@@ -159,7 +159,7 @@ cat > cluster-serving-runtime.yaml << EOL
 apiVersion: serving.kserve.io/v1alpha1
 kind: ClusterServingRuntime
 metadata:
-  name: nim-meta-llama3-8b-instruct
+  name: nvidia-nim-llama3-8b-instruct-1.0.0
 spec:
   annotations:
     prometheus.kserve.io/path: /metrics
@@ -175,7 +175,7 @@ spec:
         secretKeyRef:
           name: ngc-nim-secret
           key: NGC_CLI_API_KEY
-    image: nvcr.io/nim/meta/llama3-8b-instruct:1.0.3
+    image: nvcr.io/nim/meta/llama3-8b-instruct:1.0.0
     name: kserve-container
     ports:
     - containerPort: 8000
@@ -197,9 +197,9 @@ spec:
   - grpc-v2
   supportedModelFormats:
   - autoSelect: true
-    name: nim-meta-llama3-8b-instruct
+    name: nvidia-nim-llama3-8b-instruct
     priority: 1
-    version: "1.0.3"
+    version: "1.0.0"
   volumes:
   - emptyDir:
       medium: Memory
@@ -216,26 +216,26 @@ kind: InferenceService
 metadata:
   annotations:
     autoscaling.knative.dev/target: "10"
-  name: nim-meta-llama3-8b-instruct-1xgpu
+  name: llama3-8b-instruct-1xgpu
 spec:
   predictor:
     minReplicas: 1
     model:
       modelFormat:
-        name: nim-meta-llama3-8b-instruct
+        name: nvidia-nim-llama3-8b-instruct
       resources:
         limits:
           nvidia.com/gpu: "1"
         requests:
           nvidia.com/gpu: "1"
-      runtime: nim-meta-llama3-8b-instruct
+      runtime: nvidia-nim-llama3-8b-instruct-1.0.0
       storageUri: pvc://nim-pvc/
 EOL
 
 kubectl create -f inference-service.yaml
 
 # Watch the status of the pod created until it becomes ready
-kubectl describe pod nim-meta-llama3-8b-instruct-1xgpu
+kubectl describe pod llama3-8b-instruct-1xgpu
 Note: It can take a while for the pod to become functional. The warning message "Readiness probe failed" can be ignored. Continue with the instructions below and start testing queries.
 
 # Get the IP address of the private predictor
