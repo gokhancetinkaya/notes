@@ -175,7 +175,7 @@ spec:
         secretKeyRef:
           name: ngc-nim-secret
           key: NGC_CLI_API_KEY
-    image: nvcr.io/nim/meta/llama-3.1-8b-instruct:1.2.2
+    image: nvcr.io/nim/meta/llama3-8b-instruct:1.0.3
     name: kserve-container
     ports:
     - containerPort: 8000
@@ -199,7 +199,7 @@ spec:
   - autoSelect: true
     name: nim-meta-llama3-8b-instruct
     priority: 1
-    version: "1.2.2"
+    version: "1.0.3"
   volumes:
   - emptyDir:
       medium: Memory
@@ -267,4 +267,3 @@ www.linkedin.com/in/gcetinkaya
 References:
 https://github.com/NVIDIA/nim-deploy/tree/main/kserve
 
-https://docs.google.com/document/d/1O0xN0RQOBPnwXq0zf54gOGiTgSSoPzirHSE6zluhoo4/edit?usp=sharing
