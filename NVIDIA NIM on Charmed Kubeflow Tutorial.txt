@@ -109,11 +109,6 @@ echo "export PATH=\"\$PATH:$(pwd)/ngc-cli\"" >> ~/.bash_profile && source ~/.bas
 # Configure NGC CLI client. Enter API key, enter org, leave everything else as default
 ngc config set
 
-# Download the model
-ngc registry model download-version "nvidia/nemo/llama38bnemo:1.0"
-sudo mkdir /mnt/nim
-sudo mv llama38bnemo_v1.0 /mnt/nim
-
 # Create a PVC called nim-pvc in the cluster
 cat > nim-model-volume.yaml << EOL
 apiVersion: v1
@@ -159,7 +154,7 @@ cat > cluster-serving-runtime.yaml << EOL
 apiVersion: serving.kserve.io/v1alpha1
 kind: ClusterServingRuntime
 metadata:
-  name: nvidia-nim-llama3-8b-instruct-1.0.0
+  name: nvidia-nim-llama-3.1-8b-instruct-1.2.2
 spec:
   annotations:
     prometheus.kserve.io/path: /metrics
@@ -175,7 +170,7 @@ spec:
         secretKeyRef:
           name: ngc-nim-secret
           key: NGC_CLI_API_KEY
-    image: nvcr.io/nim/meta/llama3-8b-instruct:1.0.0
+    image: nvcr.io/nim/meta/llama-3.1-8b-instruct:1.2.2
     name: kserve-container
     ports:
     - containerPort: 8000
@@ -197,7 +192,7 @@ spec:
   - grpc-v2
   supportedModelFormats:
   - autoSelect: true
-    name: nvidia-nim-llama3-8b-instruct
+    name: nvidia-nim-llama-3.1-8b-instruct
     priority: 1
     version: "1.0.0"
   volumes:
@@ -216,36 +211,33 @@ kind: InferenceService
 metadata:
   annotations:
     autoscaling.knative.dev/target: "10"
-  name: llama3-8b-instruct-1xgpu
+  name: nvidia-nim-llama-3-1-8b-instruct-1xgpu
 spec:
   predictor:
     minReplicas: 1
     model:
       modelFormat:
-        name: nvidia-nim-llama3-8b-instruct
+        name: nvidia-nim-llama-3.1-8b-instruct
       resources:
         limits:
           nvidia.com/gpu: "1"
         requests:
           nvidia.com/gpu: "1"
-      runtime: nvidia-nim-llama3-8b-instruct-1.0.0
+      runtime: nvidia-nim-llama-3.1-8b-instruct-1.2.2
       storageUri: pvc://nim-pvc/
 EOL
 
 kubectl create -f inference-service.yaml
 
-# Watch the status of the pod created until it becomes ready
-kubectl describe pod llama3-8b-instruct-1xgpu
-
-Wait until llama3-8b-instruct-1xgpu-predictor-00001-deployment is ready. The warning message from the pod "Readiness probe failed" can be ignored.
-kubectl get deployment llama3-8b-instruct-1xgpu-predictor-00001-deployment
+Wait until the deployment is ready. The warning message from the pod "Readiness probe failed" can be ignored.
+kubectl get deployment -A |grep nim
 
 # Get the IP address of the private predictor
 KSERVE=$(kubectl get svc |grep private |awk '{print $3}')
 
 # Validate that the NIM is running by posting a query against the KServe endpoint
 curl http://$KSERVE/v1/chat/completions    -H "Content-Type: application/json"   -d '{
-    "model": "meta/llama3-8b-instruct",
+    "model": "meta/llama-3.1-8b-instruct",
     "messages": [{"role":"user","content":"What is KServe?"}]
     }'
 
